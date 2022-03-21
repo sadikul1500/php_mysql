@@ -7,7 +7,7 @@
     $age = 0;
     $address = "";
     $result = 0.0;
-    //$date_time = "";
+    $image = "";
 
     $rows = mysqli_query($connection, "select * from student where SID=$sid");
     while($row=mysqli_fetch_array($rows)){
@@ -16,7 +16,7 @@
         $age = $row["Age"];
         $address = $row["Address"];
         $result = $row["Result"];
-        //$date_time = $row["Date Created"];
+        $image = $row["Image"];
     }
     
 ?>
@@ -33,9 +33,10 @@
 <body>
 
 <div class="container">
+  <div class="row">
     <div class="col-lg-4">
   <h2>Add a student</h2>
-  <form action="" name="student-form" method="post">
+  <form action="" name="edit-form" method="post" enctype="multipart/form-data">
     <div class="form-group">
       <label for="sid">Student ID:</label>
       <input type="text" class="form-control" id="sid" placeholder="Enter id" name="sid" value="<?php echo $sid; ?>" readonly>
@@ -53,27 +54,46 @@
       <input type="text" class="form-control" id="address" placeholder="Enter address" name="address" value="<?php echo $address; ?>">
     </div>
     <div class="form-group">
-      <label for="result">Result:</label>
-      <input type="number" step="any" class="form-control" id="result" placeholder="Enter result" name="result" value="<?php echo $result; ?>">
+      <label for="image">Image:</label>
+      <input type="file" class="form-control" id="file" name="file">
     </div>
-    <!-- <div class="form-group">
-      <label for="datetime">Date Created:</label>
-      <input type="datetime-local" class="form-control" id="datetime" placeholder="Enter date-time" name="datetime">
-    </div> -->
     
     <button type="submit" name="update" class="btn btn-default">Update</button>
   </form>
+  </div>
+  <div class="col-lg-3"></div>
+  <div class="col-lg-5">
+    <div style="margin:50px 0px"><img src="<?php echo $image;?>" height="250" width="250" alt="profile picture"></div>
+    
+    <div>Result: <p style="font-size:25px;font-weight:bold;"><?php echo $result;?> </p></div>
+
+  </div>
   </div>
 </div>
 
 <?php
     if(isset($_POST['update'])){
+        $unique_key = md5(time());
+        $file_name = $_FILES["file"]["name"];
         $date_time = date('Y-m-d H:i:s');
-        mysqli_query($connection, "update student set name='$_POST[name]', age='$_POST[age]', address='$_POST[address]', result='$_POST[result]',
-        `date created`='$date_time' where sid=$sid") or mysqli_error($connection);
+
+        if($file_name==""){
+          mysqli_query($connection, "update student set name='$_POST[name]', age='$_POST[age]', address='$_POST[address]', 
+            `date created`='$date_time' where sid=$sid") or die(mysqli_error($connection));
+        }
+        else{
+          $destination = './images/'.$unique_key.$file_name;
+          $destination_for_table = 'images/'.$unique_key.$file_name;
+          move_uploaded_file($_FILES["file"]["tmp_name"], $destination);
+
+          mysqli_query($connection, "update student set name='$_POST[name]', age='$_POST[age]', address='$_POST[address]',
+            `date created`='$date_time', image='$destination_for_table' where sid=$sid") or die(mysqli_error($connection));
+        }           
         
-         ?>
+        ?>
           <script type=text/javascript>
+            // window.location.href=window.location.href;
+            // alert('updated successfully');
             window.location = "index.php";
         </script>
          <?php
